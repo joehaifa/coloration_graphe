@@ -13,6 +13,7 @@ class Graph:
         self.n_nodes = 0
         self.n_edges = 0
 
+
     def load_graph(self, graph_name: str) -> bool:
         """
         Loads a graph from a file in the standard 'p edge' format and stores it as an adjacency list.
@@ -39,6 +40,7 @@ class Graph:
         except IOError as e:
             print(f"Can't open the file: {e}")
             return False
+
 
     def load_colored_graph(self, graph_name: str) -> dict:
         """
@@ -71,6 +73,7 @@ class Graph:
             print(f"Can't open the file: {e}")
             return None
 
+
     def save_graph(self, file_name: str):
         """
         Saves the current graph to a file in the standard 'p edge' format.
@@ -96,7 +99,11 @@ class Graph:
         except IOError as e:
             print(f"Error writing to file: {e}")
 
+
     def print_graph(self):
+        """
+        Prints the adjacency list of the graph, if loaded.
+        """
         if not self.graph:
             print("The graph is not loaded.")
         else:
@@ -104,16 +111,35 @@ class Graph:
                 print(f"\n[{i}] ->", " ".join(map(str, neighbors)))
             print()
 
+
     def get_nodes(self):
+        """
+        Returns the number of nodes in the graph.
+        """
         return self.n_nodes
 
+
     def get_edges(self):
+        """
+        Returns the number of edges in the graph.
+        """
         return self.n_edges
 
+
     def get_graph(self):
+        """
+        Returns the adjacency list of the graph.
+        """
         return self.graph
 
+
+
+
+
 def modify_graph(graph: Graph):
+    """
+    Allows the user to modify a graph by adding or removing edges interactively.
+    """
     print("\nSelect a graph to modify:")
     graph_files = ["myciel3.col", "myciel4.col", "myciel5.col"]
     for i, filename in enumerate(graph_files):
@@ -121,7 +147,7 @@ def modify_graph(graph: Graph):
     graph_index = int(input("Enter your choice: "))
     graph_name = graph_files[graph_index]
     
-
+    print("*************************************************************")
     # Load the selected graph
     if not graph.load_graph(graph_name):
         print("The graph did not load.")
@@ -132,7 +158,7 @@ def modify_graph(graph: Graph):
     print("1. Add an edge")
     print("2. Remove an edge")
     action = int(input("Enter your choice: "))
-
+    print("*************************************************************")
     if action == 1:
         node1 = int(input("Enter the first node : ")) 
         node2 = int(input("Enter the second node : "))
@@ -175,45 +201,27 @@ def modify_graph(graph: Graph):
 
 
 
-    
-
-    
-
-    
-    
-    
-
-
-
-
-    
-    
 
 def read_coloring_from_file(file_path):
     """
-    Lit une coloration depuis un fichier et la retourne sous forme de dictionnaire.
-    
-    :param file_path: Le chemin du fichier contenant la coloration.
-    :return: Dictionnaire représentant la coloration sous forme {sommet: couleur}.
+    Reads a coloring from a file and returns it as a dictionary.
+
+    :param file_path: The path to the file containing the coloring.
+    :return: A dictionary representing the coloring in the form {vertex: color}.
     """
     coloring = {}
 
     with open(file_path, 'r') as file:
-        # Lire le contenu du fichier
         lines = file.readlines()
 
-        # Trouver la ligne contenant la chromosome et l'analyser
         for line in lines:
             if line.startswith("Chromosome:"):
-                # Extraire la liste des couleurs du chromosome
                 start_idx = line.index('[') + 1
                 end_idx = line.index(']')
                 chromosome_str = line[start_idx:end_idx]
                 
-                # Convertir la chaîne en liste d'entiers
                 chromosome = list(map(int, chromosome_str.split(',')))
 
-                # Construire le dictionnaire de la coloration
                 for idx, color in enumerate(chromosome):
                     coloring[idx] = color
 
@@ -253,6 +261,7 @@ def main():
     print("3. Modify a graph")
 
     option = int(input("Enter your choice: "))
+    print("*************************************************************")
 
     if option == 1:
         # Existing code for "Color a graph"
@@ -287,7 +296,7 @@ def main():
 
         max_iterations = 100000
         totaliteration = [0] 
-
+        print("*************************************************************")
         if select_method == 1:
             # Genetic Algorithm parameters
             max_iterations = 10000
@@ -371,7 +380,7 @@ def main():
             print(f"[{i}] {os.path.basename(filename)}")  # Affiche uniquement le nom du fichier
         file_index = int(input("Enter your choice: "))
         coloring_file = coloring_files[file_index]
-
+        print("*************************************************************")
         # Parse coloring from file
         coloring = read_coloring_from_file(coloring_file)
         print(f"Coloring loaded: {coloring}")
@@ -382,6 +391,7 @@ def main():
             print(f"[{i}] {filename}")
         graph_index = int(input("Enter your choice: "))
         graph_file = graph_files[graph_index]
+        print("*************************************************************")
 
         # Load the selected graph
         adjacency_list = graph.load_colored_graph(graph_file)

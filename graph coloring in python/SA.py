@@ -4,6 +4,7 @@ from Individual import Individual
 import os
 
 class SA:
+
     def __init__(self, initial_temperature, n_nodes, n_edges, main_graph, cool_mode=0, alpha=0.005):
         self.temperature = self.temperature0 = initial_temperature
         self.cool_mode = cool_mode
@@ -18,10 +19,22 @@ class SA:
         self.best_solution = new_individual
         self.current_solution = new_individual
 
+
     def get_best_state(self):
+        """
+        Returns the best solution found during the SA process.
+
+        :return: The best solution as an Individual object.
+        """
         return self.best_solution
 
+
     def find_first_collision(self):
+        """
+        Identifies the first node with a color conflict in the current solution.
+
+        :return: The index of the conflicting node, or a random node if no conflicts exist.
+        """
         pos_collision = -1
         collision = False
 
@@ -40,7 +53,12 @@ class SA:
         
         return pos_collision
 
+
     def next_neighbor(self):
+        """
+        Generates the next neighbor by modifying the color of a conflicting node
+        and decides whether to accept the new solution based on fitness and temperature.
+        """
         node = self.find_first_collision()
 
         # Instead of assigning a random color, try to find a color that minimizes conflicts
@@ -70,12 +88,18 @@ class SA:
                 self.current_solution = temp_solution
 
     def cool(self, k):
+        """
+        Reduces the temperature based on the selected cooling mode.
+
+        :param k: The current iteration number.
+        """
         if self.cool_mode == 0:
             self.temperature -= self.alpha
         elif self.cool_mode == 1:
             self.temperature *= self.alpha
         else:
             self.temperature = self.temperature0 / math.log(k + 2)
+
 
     def main_loop(self, max_iterations, min_temp, min_colors,totaliteration):
         correct = 0
@@ -97,9 +121,10 @@ class SA:
             if correct == 10:
                 correct_color = True
                 break
-            
+
         # Save the best solution to a file
         self.save_best_solution()
+
 
     def save_best_solution(self):
         """
@@ -118,7 +143,15 @@ class SA:
         except IOError as e:
             print(f"Error writing to file: {e}")
 
+
     def calculate_fitness(self, ind):
+        """
+        Calculates the fitness of an individual solution based on the number of
+        non-conflicting edges and penalizes the number of colors used.
+
+        :param ind: The individual whose fitness is being calculated.
+        :return: The calculated fitness value.
+        """
         fit = ind.get_fitness()
 
         if fit == 0:

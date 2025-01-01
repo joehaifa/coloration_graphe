@@ -15,24 +15,46 @@ class Tabu:
         self.critical_solutions = []
         self.tabu_list = []
     
+
     def generate_initial_solution(self):
+        """
+        Generates an initial solution by assigning random colors to each node.
+        """
         individual = Individual(n_genes=self.n_nodes)  # Use 'n_genes' instead of 'nGenes'
         for i in range(self.n_nodes):
             individual.insert_color(i, random.randint(0, self.n_nodes // 2))  # Use half the number of colors
         self.calculate_fitness(individual)
         return individual
     
+
     def find_first_collision(self):
+        """
+        Finds the first node in the graph that has a color conflict with its neighbors.
+
+        :return: The index of the conflicting node, or -1 if no conflicts are found.
+        """
         for i in range(self.n_nodes):
             for neighbor in self.main_graph[i]:
                 if self.current_solution.at(i) == self.current_solution.at(neighbor):
                     return i
         return -1
     
+
     def check_tabu_list(self, p, c):
+        """
+        Checks if a move (node, color) is in the tabu list.
+
+        :param p: The node index.
+        :param c: The proposed color.
+        :return: True if the move is tabu, False otherwise.
+        """
         return (p, c) in self.tabu_list
     
+
     def next_neighbor(self):
+        """
+        Finds and applies the best non-tabu move to reduce conflicts or improve fitness.
+        """
         node = self.find_first_collision()
         if node == -1:
             return  # No collision
@@ -57,6 +79,7 @@ class Tabu:
             self.current_solution = best_neighbor
             self.current_solution.set_fitness(best_fitness)
     
+
     def main_loop(self, max_iterations, min_colors, totaliteration):
         for iteration in range(max_iterations):
             totaliteration[0] += 1
@@ -75,6 +98,7 @@ class Tabu:
         # Save the best solution coloring to a file
         self.save_best_solution()
 
+
     def save_best_solution(self):
         """
         Save the best solution's coloring to a file in the same directory as the script.
@@ -92,7 +116,15 @@ class Tabu:
         except IOError as e:
             print(f"Error writing to file: {e}")
 
+
     def calculate_fitness(self, ind):
+        """
+        Calculates the fitness of an individual solution based on the number of 
+        non-conflicting edges and the number of colors used.
+
+        :param ind: The individual whose fitness is to be calculated.
+        :return: The fitness value.
+        """
         non_conflicting_edges = sum(1 for i in range(self.n_nodes) 
                                     for neighbor in self.main_graph[i] 
                                     if ind.at(i) != ind.at(neighbor)) // 2  # Count each edge once
