@@ -1,4 +1,5 @@
 import random
+import os
 from collections import deque
 from Individual import Individual  # Ensure that the Individual class is correctly implemented
 
@@ -107,6 +108,13 @@ class GA:
         return random.randint(start, end)
 
     def save_best_coloring(self, filename="best_solution.txt"):
+        """
+        Save the best coloring solution to a file in the same directory as the script.
+        """
+        # Get the directory of the main script
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, filename)
+
         # Find the best individual
         best_individual = max(self.population, key=lambda ind: ind.get_fitness())
         
@@ -116,10 +124,11 @@ class GA:
         fitness = best_individual.get_fitness()
 
         # Save the coloring to a file in the specified format
-        with open(filename, 'w') as file:
-            file.write(f"Chromosome: {best_coloring}\n")
-            file.write(f"Number of colors used: {num_colors_used}\n")
-            file.write(f"Fitness: {fitness}\n")
-        
-        print(f"Best coloring saved to {filename}.")
-
+        try:
+            with open(file_path, 'w') as file:
+                file.write(f"Chromosome: {best_coloring}\n")
+                file.write(f"Number of colors used: {num_colors_used}\n")
+                file.write(f"Fitness: {fitness}\n")
+            print(f"Best coloring saved successfully to {file_path}.")
+        except IOError as e:
+            print(f"Error saving the best coloring to {file_path}: {e}")

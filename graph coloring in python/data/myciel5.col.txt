@@ -1,9 +1,4 @@
-c FILE: myciel5.col
-c SOURCE: Michael Trick (trick@cmu.edu)
-c DESCRIPTION: Graph based on Mycielski transformation. 
-c              Triangle free (clique number 2) but increasing
-c              coloring number
-p edge 47 236
+p edge 47 237
 e 1 2
 e 1 4
 e 1 7

@@ -5,6 +5,7 @@ from Individual import Individual
 from GA import GA
 from Tabu import Tabu
 from SA import SA
+import os
 
 class Graph:
     def __init__(self):
@@ -16,7 +17,10 @@ class Graph:
         """
         Loads a graph from a file in the standard 'p edge' format and stores it as an adjacency list.
         """
-        file_path = f"data/{graph_name}.txt"
+        # Dynamically construct the path relative to the current script location
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, "data", f"{graph_name}.txt")
+
         try:
             with open(file_path, 'r') as file:
                 for line in file:
@@ -30,11 +34,10 @@ class Graph:
                         node1 = int(parts[1]) - 1
                         node2 = int(parts[2]) - 1
                         self.graph[node1].append(node2)
-                        
-            print("Graph loaded successfully.")
+            print(f"Graph '{graph_name}' loaded successfully from {file_path}.")
             return True
         except IOError as e:
-            print(f"Can't open the file path: {e}")
+            print(f"Can't open the file: {e}")
             return False
 
     def load_colored_graph(self, graph_name: str) -> dict:
@@ -42,9 +45,12 @@ class Graph:
         Loads a graph from a .col file, returning the adjacency list as a dictionary.
         It also adapts the function to handle dynamic graph sizes.
         """
-        file_path = f"data/{graph_name}.col.txt"
+        # Dynamically construct the path relative to the current script location
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, "data", f"{graph_name}.col.txt")
+
         adjacency_list = {}  # Initialize the adjacency list as a dictionary
-        
+
         try:
             with open(file_path, 'r') as file:
                 for line in file:
@@ -57,19 +63,28 @@ class Graph:
                         parts = line.split()
                         node1 = int(parts[1]) - 1  # Adjust to 0-based index
                         node2 = int(parts[2]) - 1
-                        adjacency_list[node1].append(node2) # Add edge
-                      
-                        
-                        
-            
-            print("Graph loaded successfully.")
+                        adjacency_list[node1].append(node2)  # Add edge
+
+            print(f"Graph '{graph_name}' loaded successfully from {file_path}.")
             return adjacency_list
         except IOError as e:
-            print(f"Can't open the file path: {e}")
+            print(f"Can't open the file: {e}")
             return None
 
     def save_graph(self, file_name: str):
-        file_path = f"data/{file_name}.txt"
+        """
+        Saves the current graph to a file in the standard 'p edge' format.
+        """
+        # Dynamically construct the path relative to the current script location
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        data_dir = os.path.join(current_dir, "data")
+
+        # Ensure the 'data' directory exists
+        os.makedirs(data_dir, exist_ok=True)
+
+        # Construct the file path
+        file_path = os.path.join(data_dir, f"{file_name}.txt")
+
         try:
             with open(file_path, 'w') as file:
                 # Write the graph metadata (nodes and edges)
@@ -77,7 +92,7 @@ class Graph:
                 for node1, neighbors in enumerate(self.graph):
                     for node2 in neighbors:
                         file.write(f"e {node1 + 1} {node2 + 1}\n")
-            print("Graph saved successfully.")
+            print(f"Graph saved successfully to {file_path}.")
         except IOError as e:
             print(f"Error writing to file: {e}")
 
@@ -100,7 +115,7 @@ class Graph:
 
 def modify_graph(graph: Graph):
     print("\nSelect a graph to modify:")
-    graph_files = ["myciel3.col", "myciel4", "test"]
+    graph_files = ["myciel3.col", "myciel4.col", "myciel5.col"]
     for i, filename in enumerate(graph_files):
         print(f"[{i}] {filename}")
     graph_index = int(input("Enter your choice: "))
@@ -234,7 +249,7 @@ def check_coloring(adjacency_list, coloring):
 def main():
     print("Select an option:")
     print("1. Color a graph")
-    print("2. Proposer une coloration")
+    print("2. Propose a coloring")
     print("3. Modify a graph")
 
     option = int(input("Enter your choice: "))
@@ -345,11 +360,15 @@ def main():
 
     elif option == 2:
         graph = Graph()
+
         # Load coloring file
-        coloring_files = ["best_solution.txt"]
+        current_dir = os.path.dirname(os.path.abspath(__file__))  # Répertoire du script principal
+        best_solution_path = os.path.join(current_dir, "best_solution.txt")  # Chemin dynamique
+        coloring_files = [best_solution_path]
+
         print("Select a coloring file:")
         for i, filename in enumerate(coloring_files):
-            print(f"[{i}] {filename}")
+            print(f"[{i}] {os.path.basename(filename)}")  # Affiche uniquement le nom du fichier
         file_index = int(input("Enter your choice: "))
         coloring_file = coloring_files[file_index]
 
@@ -363,11 +382,15 @@ def main():
             print(f"[{i}] {filename}")
         graph_index = int(input("Enter your choice: "))
         graph_file = graph_files[graph_index]
-    
+
         # Load the selected graph
         adjacency_list = graph.load_colored_graph(graph_file)
         print(f"Graph loaded: {adjacency_list}")
+        if adjacency_list is None:
+            print("Failed to load the colored graph.")
+            return
 
+        # Check for conflicts
         conflicts = check_coloring(adjacency_list, coloring)
 
     elif option == 3:

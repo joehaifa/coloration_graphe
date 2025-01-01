@@ -1,5 +1,6 @@
 import random
 from collections import deque
+import os
 from Individual import Individual
 
 class Tabu:
@@ -56,9 +57,9 @@ class Tabu:
             self.current_solution = best_neighbor
             self.current_solution.set_fitness(best_fitness)
     
-    def main_loop(self, max_iterations, min_colors,totaliteration):
+    def main_loop(self, max_iterations, min_colors, totaliteration):
         for iteration in range(max_iterations):
-            totaliteration[0]+=1
+            totaliteration[0] += 1
             self.calculate_fitness(self.current_solution)
             if self.current_solution.get_num_of_colors() <= min_colors:
                 break
@@ -72,7 +73,24 @@ class Tabu:
         print(f"FIT: {self.best_solution.get_fitness()}")
         
         # Save the best solution coloring to a file
-        self.best_solution.save_coloring_to_file("best_solution.txt",self.best_solution)
+        self.save_best_solution()
+
+    def save_best_solution(self):
+        """
+        Save the best solution's coloring to a file in the same directory as the script.
+        """
+        # Get the directory of the main script
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, "best_solution.txt")
+
+        try:
+            with open(file_path, 'w') as file:
+                file.write(f"Chromosome: {self.best_solution.chromosome}\n")
+                file.write(f"Number of colors used: {self.best_solution.get_num_of_colors()}\n")
+                file.write(f"Fitness: {self.best_solution.get_fitness()}\n")
+            print(f"Best solution saved successfully to {file_path}.")
+        except IOError as e:
+            print(f"Error writing to file: {e}")
 
     def calculate_fitness(self, ind):
         non_conflicting_edges = sum(1 for i in range(self.n_nodes) 

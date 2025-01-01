@@ -2,7 +2,7 @@
 
 import random
 from collections import deque
-
+import os
 import random
 
 class Individual:

@@ -1,6 +1,7 @@
 import random
 import math
 from Individual import Individual
+import os
 
 class SA:
     def __init__(self, initial_temperature, n_nodes, n_edges, main_graph, cool_mode=0, alpha=0.005):
@@ -96,7 +97,26 @@ class SA:
             if correct == 10:
                 correct_color = True
                 break
-        self.best_solution.save_coloring_to_file("best_solution.txt",self.best_solution)
+            
+        # Save the best solution to a file
+        self.save_best_solution()
+
+    def save_best_solution(self):
+        """
+        Save the best solution's coloring to a file in the same directory as the script.
+        """
+        # Get the directory of the main script
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, "best_solution.txt")
+
+        try:
+            with open(file_path, 'w') as file:
+                file.write(f"Chromosome: {self.best_solution.chromosome}\n")
+                file.write(f"Number of colors used: {self.best_solution.get_num_of_colors()}\n")
+                file.write(f"Fitness: {self.best_solution.get_fitness()}\n")
+            print(f"Best solution saved successfully to {file_path}.")
+        except IOError as e:
+            print(f"Error writing to file: {e}")
 
     def calculate_fitness(self, ind):
         fit = ind.get_fitness()
