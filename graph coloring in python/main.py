@@ -265,7 +265,7 @@ def main():
 
     if option == 1:
         # Existing code for "Color a graph"
-        data = ["myciel3.col", "myciel4.col", "myciel5.col"]
+        data = ["myciel3.col", "myciel4.col", "myciel5.col","graph6.col"]
         graph_main = Graph()
 
         # Graph selection
@@ -385,7 +385,7 @@ def main():
         coloring = read_coloring_from_file(coloring_file)
         print(f"Coloring loaded: {coloring}")
 
-        graph_files = ["myciel3", "myciel4", "myciel5"]  # Graphs to choose from
+        graph_files = ["myciel3", "myciel4", "myciel5","graph6"]  # Graphs to choose from
         print("Select a graph file:")
         for i, filename in enumerate(graph_files):
             print(f"[{i}] {filename}")

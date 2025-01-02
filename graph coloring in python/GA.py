@@ -130,11 +130,26 @@ class GA:
 
     def print_population(self):
         """
-        Prints the chromosomes and fitness values of all individuals in the population.
+        Prints the chromosomes and fitness values of all individuals in the population,
+        followed by the best solution (highest fitness).
         """
+        best_individual = None
+        best_fitness = float('-inf')
+
         for individual in self.population:
             individual.print_chromosome()
-            print("Fitness:", individual.get_fitness())
+            fitness = individual.get_fitness()
+            print("Fitness:", fitness)
+
+            # Track the best individual
+            if fitness > best_fitness:
+                best_fitness = fitness
+                best_individual = individual
+
+        if best_individual:
+            print("\nBest Solution:")
+            best_individual.print_chromosome()
+            print("Fitness:", best_fitness)
 
     def correct_color(self, n_colors, percentage):
         """
