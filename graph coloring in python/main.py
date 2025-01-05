@@ -382,7 +382,7 @@ def main():
                 n_colors = 5
             
             if n_graph == 2:
-                n_colors = 8
+                n_colors = 10
 
             if n_graph == 3:
                 n_colors = 11
