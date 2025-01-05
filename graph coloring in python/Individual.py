@@ -1,29 +1,16 @@
 import random
-from collections import deque
 import os
-import random
-
 class Individual:
-
-    def __init__(self, n_genes=None, chromosome=None):
-        self.chromosome = []
-        self.n_genes = n_genes if n_genes is not None else 0
-        self.n_colors_used = 0
+    def __init__(self, n_genes, n_colors):
+        self.chromosome = [random.randint(0, n_colors - 1) for _ in range(n_genes)]
+        self.n_colors = n_colors
         self.fitness = 0
 
-        if n_genes is not None and chromosome is None:
-            self.chromosome = [self._get_random_int(0, n_genes) for _ in range(n_genes)]
-            self.chromosome[0] = 0  # Start with first color at the beginning
-            color = 0
-            for i in range(1, n_genes):
-                if self.chromosome[i] == 0:
-                    self.chromosome[i] = color
-                else:
-                    color += 1
-                    self.chromosome[i] = color
-        elif chromosome is not None:
-            self.chromosome = chromosome[:]
-            self.n_genes = len(chromosome)
+    def get_num_of_colors(self):
+        return len(set(self.chromosome))
+
+    
+
 
 
     def get_num_of_colors(self):
@@ -70,18 +57,14 @@ class Individual:
         return self.fitness
 
 
-    def mutate(self):
-        """
-        Mutates the individual's chromosome by swapping random genes to introduce variation.
-        """
-        self.fitness = 0
-        max_iterations = self.n_genes // 2
-        random_a = self._get_random_int(1, max_iterations)
+    def mutate(self, graph):
+        """ Mutate nodes causing conflicts. """
+        for node in range(len(self.chromosome)):
+            for neighbor in graph[node]:
+                if self.chromosome[node] == self.chromosome[neighbor]:
+                    self.chromosome[node] = random.choice(
+                        [color for color in range(self.n_colors) if color != self.chromosome[node]] )
 
-        for i in range(random_a):
-            random_b = self._get_random_int(0, self.n_genes - 1)
-            swap_idx = (random_b + i + random_a) % self.n_genes
-            self.chromosome[random_b], self.chromosome[swap_idx] = self.chromosome[swap_idx], self.chromosome[random_b]
 
 
     def reproduce(self, parent2):
@@ -122,14 +105,20 @@ class Individual:
         """
         return random.randint(start, end)
     
-    def save_coloring_to_file(self, filename,best_solution):
+    def save_best_solution(self,best_solution):
             """
-            Save the current best solution's coloring to a file in the specified format.
+            Save the best solution's coloring to a file in the same directory as the script.
+            """
+            # Get the directory of the main script
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            file_path = os.path.join(current_dir, "best_solution.txt")
 
-            :param filename: Name of the file to save the coloring.
-            """
-            with open(filename, 'w') as file:
-                # Write the chromosome in the same format as it is printed
-                file.write(f"Chromosome: {best_solution.chromosome} \nNumber of colors used: {best_solution.get_num_of_colors()}\nFitness: {best_solution.get_fitness()}\n")
-                print(f"Best solution saved to {filename}")
+            try:
+                with open(file_path, 'w') as file:
+                    file.write(f"Chromosome: {best_solution.chromosome}\n")
+                    file.write(f"Number of colors used: {best_solution.get_num_of_colors()}\n")
+                    file.write(f"Fitness: {best_solution.get_fitness()}\n")
+                print(f"Best solution saved successfully to {file_path}.")
+            except IOError as e:
+                print(f"Error writing to file: {e}")
         

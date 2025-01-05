@@ -3,169 +3,139 @@ import math
 from Individual import Individual
 import os
 
-class SA:
 
-    def __init__(self, initial_temperature, n_nodes, n_edges, main_graph, cool_mode=0, alpha=0.005):
+class SA:
+    def __init__(self, initial_temperature, n_nodes, n_edges, main_graph, min_colors, cool_mode=0, alpha=0.005):
         self.temperature = self.temperature0 = initial_temperature
         self.cool_mode = cool_mode
         self.alpha = alpha
         self.main_graph = main_graph
         self.n_nodes = n_nodes
         self.n_edges = n_edges
+        self.min_colors = min_colors
+        self.n_colors = max(min_colors, 10)
 
-        # Create an Individual with a chromosome initialized to 1 for each gene
-        chromosome = [1] * n_nodes
-        new_individual = Individual(chromosome=chromosome)
-        self.best_solution = new_individual
+        # Generate a greedy initial solution
+        self.generate_greedy_solution()
+
+    def generate_greedy_solution(self):
+        """Generate an initial solution using a greedy coloring heuristic."""
+        colors = [-1] * self.n_nodes
+        for node in range(self.n_nodes):
+            # Get colors of neighbors
+            neighbor_colors = {colors[neighbor] for neighbor in self.main_graph[node] if colors[neighbor] != -1}
+            # Assign the smallest available color
+            for color in range(self.n_colors):
+                if color not in neighbor_colors:
+                    colors[node] = color
+                    break
+        new_individual = Individual(n_genes=self.n_nodes, n_colors=self.n_colors)
+        new_individual.chromosome = colors
         self.current_solution = new_individual
-
+        self.best_solution = new_individual
 
     def get_best_state(self):
-        """
-        Returns the best solution found during the SA process.
-
-        :return: The best solution as an Individual object.
-        """
         return self.best_solution
 
-
     def find_first_collision(self):
-        """
-        Identifies the first node with a color conflict in the current solution.
-
-        :return: The index of the conflicting node, or a random node if no conflicts exist.
-        """
-        pos_collision = -1
-        collision = False
-
-        if self.current_solution.get_fitness() < self.n_edges:
-            for i in range(self.n_nodes):
-                for pos in self.main_graph[i]:
-                    if self.current_solution.at(i) == self.current_solution.at(pos):
-                        pos_collision = i
-                        collision = True
-                        break
-                if collision:
-                    break
-        
-        if not collision:
-            pos_collision = random.randint(0, self.n_nodes - 1)
-        
-        return pos_collision
-
+        for i in range(self.n_nodes):
+            for neighbor in self.main_graph[i]:
+                if self.current_solution.at(i) == self.current_solution.at(neighbor):
+                    return i
+        return random.randint(0, self.n_nodes - 1)
 
     def next_neighbor(self):
-        """
-        Generates the next neighbor by modifying the color of a conflicting node
-        and decides whether to accept the new solution based on fitness and temperature.
-        """
         node = self.find_first_collision()
 
-        # Instead of assigning a random color, try to find a color that minimizes conflicts
-        available_colors = set(range(self.n_nodes))
-        for neighbor in self.main_graph[node]:
-            if self.current_solution.at(neighbor) in available_colors:
-                available_colors.remove(self.current_solution.at(neighbor))
+        # Get available colors for this node
+        used_colors = {self.current_solution.at(neighbor) for neighbor in self.main_graph[node]}
+        available_colors = [c for c in range(self.n_colors) if c not in used_colors]
 
-        # Choose a color from the remaining set or a random color if all are used
-        color = random.choice(list(available_colors)) if available_colors else random.randint(0, self.n_nodes - 1)
+        # Assign a random valid color or fallback to random
+        color = random.choice(available_colors) if available_colors else random.randint(0, self.n_colors - 1)
 
-        # Copy current_solution to temp_solution for mutation
-        temp_solution = Individual(chromosome=self.current_solution.chromosome[:])
+        temp_solution = Individual(n_genes=self.n_nodes, n_colors=self.n_colors)
+        temp_solution.chromosome = self.current_solution.chromosome[:]
         temp_solution.insert_color(node, color)
-        temp_solution.set_fitness(0)
 
         temp_fit = self.calculate_fitness(temp_solution)
         current_fit = self.calculate_fitness(self.current_solution)
 
+        # Always accept better solutions
         if temp_fit > current_fit:
             self.current_solution = temp_solution
         else:
-            p = random.random()
+            # Accept worse solutions based on temperature
             diff_fitness = current_fit - temp_fit
-
-            if p < math.exp(-diff_fitness / self.temperature):
+            if random.random() < math.exp(-diff_fitness / self.temperature):
                 self.current_solution = temp_solution
 
     def cool(self, k):
-        """
-        Reduces the temperature based on the selected cooling mode.
-
-        :param k: The current iteration number.
-        """
+        """Cooling schedule."""
         if self.cool_mode == 0:
             self.temperature -= self.alpha
         elif self.cool_mode == 1:
-            self.temperature *= self.alpha
+            self.temperature *= (1 - self.alpha)  # Exponential cooling
         else:
             self.temperature = self.temperature0 / math.log(k + 2)
 
-
-    def main_loop(self, max_iterations, min_temp, min_colors,totaliteration):
+    def main_loop(self, max_iterations, min_temp, total_iterations):
         correct = 0
-        correct_color = False
 
-        for totaliteration[0] in range(max_iterations):
+        for total_iterations[0] in range(max_iterations):
             self.next_neighbor()
-            self.cool(totaliteration[0])
+            self.cool(total_iterations[0])
 
+            # Stop if the temperature is below the minimum
             if self.temperature < min_temp:
                 break
 
+            # Update the best solution if a better one is found
             if self.current_solution.get_fitness() > self.best_solution.get_fitness():
                 self.best_solution = self.current_solution
 
-            if self.current_solution.get_num_of_colors() == min_colors:
+            # Check if the solution is conflict-free
+            if self.current_solution.get_fitness() == self.n_edges and self.current_solution.get_num_of_colors() <= self.min_colors:
                 correct += 1
+            else:
+                correct = 0
 
-            if correct == 10:
-                correct_color = True
+            # Ensure no conflicts for termination
+            if correct == 10 and self.is_conflict_free(self.current_solution):
                 break
 
         # Save the best solution to a file
-        self.save_best_solution()
-
-
-    def save_best_solution(self):
-        """
-        Save the best solution's coloring to a file in the same directory as the script.
-        """
-        # Get the directory of the main script
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(current_dir, "best_solution.txt")
-
-        try:
-            with open(file_path, 'w') as file:
-                file.write(f"Chromosome: {self.best_solution.chromosome}\n")
-                file.write(f"Number of colors used: {self.best_solution.get_num_of_colors()}\n")
-                file.write(f"Fitness: {self.best_solution.get_fitness()}\n")
-            print(f"Best solution saved successfully to {file_path}.")
-        except IOError as e:
-            print(f"Error writing to file: {e}")
-
+        self.best_solution.save_best_solution( self.best_solution)
 
     def calculate_fitness(self, ind):
-        """
-        Calculates the fitness of an individual solution based on the number of
-        non-conflicting edges and penalizes the number of colors used.
+        """Fitness function to evaluate a solution."""
+        fit = 0
+        conflicts = 0
+        for i in range(self.n_nodes):
+            for neighbor in self.main_graph[i]:
+                if ind.at(i) != ind.at(neighbor):
+                    fit += 1
+                else:
+                    conflicts += 1
 
-        :param ind: The individual whose fitness is being calculated.
-        :return: The calculated fitness value.
-        """
-        fit = ind.get_fitness()
+        # Strong penalty for conflicts
+        conflict_penalty = conflicts * 10
 
-        if fit == 0:
-            fit = 0
-            for i in range(self.n_nodes):
-                for j in self.main_graph[i]:
-                    if ind.at(i) != ind.at(j):
-                        fit += 1
+        # Penalty for exceeding the minimum number of colors
+        color_penalty = max(0, (ind.get_num_of_colors() - self.min_colors) * 20)
 
-            if fit == self.n_edges:
-                fit += (self.n_nodes - ind.get_num_of_colors())
+        # Reward for fewer colors if conflict-free
+        if conflicts == 0:
+            fit += (self.n_nodes - ind.get_num_of_colors()) * 10
 
-            ind.set_fitness(fit)
-        
+        fit -= conflict_penalty + color_penalty
+        ind.set_fitness(fit)
         return fit
 
-    
+    def is_conflict_free(self, ind):
+        """Check if a solution is conflict-free."""
+        for i in range(self.n_nodes):
+            for neighbor in self.main_graph[i]:
+                if ind.at(i) == ind.at(neighbor):
+                    return False
+        return True

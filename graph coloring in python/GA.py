@@ -1,213 +1,111 @@
 import random
-import os
-from collections import deque
-from Individual import Individual  # Ensure that the Individual class is correctly implemented
+from Individual import Individual
+import os 
 
 class GA:
+    def __init__(self, graph, population_size, n_colors, mutation_rate):
+        self.graph = graph
+        self.population_size = population_size
+        self.n_colors = n_colors
+        self.mutation_rate = mutation_rate
+        self.population = [Individual(len(graph), n_colors) for _ in range(population_size)]
+        self.best_solution = None  # Stocker la meilleure solution trouvée
 
-    def __init__(self, n_individuals, n_genes, n_edges, main_graph):
-        self.n_individuals = n_individuals
-        self.n_genes = n_genes
-        self.n_edges = n_edges
-        self.main_graph = main_graph
-        self.population = [Individual(n_genes=n_genes) for _ in range(n_individuals)]
+    def fitness(self, individual):
+        """ Calculate fitness by penalizing conflicts and rewarding fewer colors. """
+        conflicts = 0
+        for node in range(len(self.graph)):
+            for neighbor in self.graph[node]:
+                if individual.chromosome[node] == individual.chromosome[neighbor]:
+                    conflicts += 1
+        # Reward solutions with fewer colors
+        return -conflicts + (len(self.graph) - individual.get_num_of_colors())
 
+    def select_parents(self):
+        """ Select two parents using tournament selection. """
+        tournament = random.sample(self.population, k=3)
+        tournament.sort(key=lambda ind: self.fitness(ind), reverse=True)
+        return tournament[0], tournament[1]
 
-    def add_individual(self, ind_new):
-        """
-        Adds a new individual to the population.
+    def crossover(self, parent1, parent2):
+        """ Perform uniform crossover between two parents. """
+        child = Individual(len(self.graph), self.n_colors)
+        child.chromosome = [
+            random.choice([parent1.chromosome[i], parent2.chromosome[i]])
+            for i in range(len(self.graph))
+        ]
+        return child
 
-        :param ind_new: The Individual instance to add.
-        """
-        self.population.append(ind_new)
-        self.n_individuals += 1
+    def correct_conflicts(self, individual):
+        """ Resolve conflicts in an individual's coloring. """
+        for node, neighbors in enumerate(self.graph):
+            neighbor_colors = {individual.chromosome[neighbor] for neighbor in neighbors}
+            if individual.chromosome[node] in neighbor_colors:
+                for color in range(self.n_colors):
+                    if color not in neighbor_colors:
+                        individual.chromosome[node] = color
+                        break
 
+    def no_conflicts(self, individual):
+        """ Check if an individual's coloring is conflict-free. """
+        for node, neighbors in enumerate(self.graph):
+            for neighbor in neighbors:
+                if individual.chromosome[node] == individual.chromosome[neighbor]:
+                    return False
+        return True
 
-    def find_best_individuals(self, percentage):
-        """
-        Finds and returns the top percentage of individuals based on fitness.
-
-        :param percentage: The percentage of individuals to select.
-        :return: A list of the best individuals.
-        """
-        best_individuals = []
-        sorted_population = sorted([(self.fitness_of_individual(i), i) for i in range(self.n_individuals)], reverse=True)
-        n_best = int(percentage * self.n_individuals)
-
-        for _, idx in sorted_population[:n_best]:
-            best_individuals.append(self.population[idx])
-        return best_individuals
-
-
-    def reproduce(self, population, new_ind):
-        """
-        Generates new individuals by reproducing from the given population.
-
-        :param population: The list of individuals to reproduce from.
-        :param new_ind: The number of new individuals to create.
-        :return: A list of newly reproduced individuals.
-        """
+    def evolve(self):
+        """ Create the next generation of individuals. """
         new_population = []
-        n_individuals = len(population)
+        for _ in range(self.population_size):
+            parent1, parent2 = self.select_parents()
+            child = self.crossover(parent1, parent2)
+            if random.random() < self.mutation_rate:
+                child.mutate(self.graph)
+            self.correct_conflicts(child)  # Correct conflicts after mutation
+            new_population.append(child)
+        self.population = new_population
 
-        for _ in range(new_ind):
-            parent1 = self._get_random_int(0, n_individuals - 1)
-            parent2 = (parent1 + self._get_random_int(1, n_individuals - 1)) % n_individuals
-            son = population[parent1].reproduce(population[parent2])
-            new_population.append(son)
-        return new_population
+    def save_best_solution(self):
+            """
+            Save the best solution's coloring to a file in the same directory as the script.
+            """
+            # Get the directory of the main script
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            file_path = os.path.join(current_dir, "best_solution.txt")
 
+            try:
+                with open(file_path, 'w') as file:
+                    file.write(f"Chromosome: {self.best_solution.chromosome}\n")
+                    file.write(f"Number of colors used: {self.best_solution.get_num_of_colors()}\n")
+                    file.write(f"Fitness: {self.fitness(self.best_solution)}\n")
+                print(f"Best solution saved successfully to {file_path}.")
+            except IOError as e:
+                print(f"Error writing to file: {e}")
 
-    def mutate(self, population, new_ind):
-        """
-        Mutates a given number of individuals in the population.
+    def run(self, max_generations,totaliteration):
+        """ Run the genetic algorithm. """
+        for generation in range(max_generations):
+            totaliteration[0]+=1
+            self.population.sort(key=lambda ind: self.fitness(ind), reverse=True)
+            best_individual = self.population[0]
 
-        :param population: The list of individuals to mutate.
-        :param new_ind: The number of individuals to mutate.
-        :return: A list of mutated individuals.
-        """
-        new_population = []
+            # Mettre à jour la meilleure solution si nécessaire
+            if not self.best_solution or self.fitness(best_individual) > self.fitness(self.best_solution):
+                self.best_solution = best_individual
 
-        for _ in range(new_ind):
-            random_idx = self._get_random_int(0, len(population) - 1)
-            new_individual = population[random_idx]
-            new_individual.mutate()
-            new_population.append(new_individual)
-        return new_population
-    
+            # Check if the best solution is conflict-free
+            if self.no_conflicts(best_individual):
+                print(f"Generation {generation}: Best fitness = {self.fitness(best_individual)}")
+                print(f"Conflict-free solution found in generation {generation}.")
+                self.save_best_solution()
+                return best_individual
 
-    def create_new_population(self, p_best, p_reproduce, p_mutations):
-        """
-        Creates a new population by selecting, reproducing, and mutating individuals.
+            
+            self.evolve()
 
-        :param p_best: The percentage of individuals to select as the best.
-        :param p_reproduce: The percentage of individuals to generate through reproduction.
-        :param p_mutations: The percentage of individuals to generate through mutation.
-        """
-        # Calculate the number of individuals to select for each process
-        total_ratio = p_best + p_reproduce + p_mutations
-        n_best = int(self.n_individuals * (p_best / total_ratio))
-        n_reproduce = int(self.n_individuals * (p_reproduce / total_ratio))
-        n_mutations = self.n_individuals - n_best - n_reproduce  # Ensure population size remains consistent
-
-        # Select the best individuals
-        best_individuals = self.find_best_individuals(p_best / total_ratio)
-        
-        # Generate new individuals through reproduction and mutation
-        reproduced_individuals = self.reproduce(best_individuals, n_reproduce)
-        mutated_individuals = self.mutate(best_individuals, n_mutations)
-
-        # Combine all new individuals to form the new population
-        new_population = best_individuals + reproduced_individuals + mutated_individuals
-
-        # If the new population is larger than needed, trim it to fit the target population size
-        self.population = new_population[:self.n_individuals]
-        
-        # Recalculate fitness for reproduced and mutated individuals
-        for i in range(n_best, self.n_individuals):
-            self.fitness_of_individual(i)
-
-
-    def fitness_of_individual(self, index):
-        """
-        Calculates and returns the fitness of an individual in the population.
-
-        :param index: The index of the individual in the population.
-        :return: The fitness value of the individual.
-        """
-        fit = self.population[index].get_fitness()
-
-        if fit == 0:
-            for i in range(self.n_genes):
-                for neighbor in self.main_graph[i]:
-                    if self.population[index].at(i) != self.population[index].at(neighbor):
-                        fit += 1
-            if fit == self.n_edges:
-                fit += self.n_genes - self.population[index].get_num_of_colors()
-            self.population[index].set_fitness(fit)
-        return fit
-
-
-    def print_population(self):
-        """
-        Prints the chromosomes and fitness values of all individuals in the population,
-        followed by the best solution (highest fitness).
-        """
-        best_individual = None
-        best_fitness = float('-inf')
-
-        for individual in self.population:
-            individual.print_chromosome()
-            fitness = individual.get_fitness()
-            print("Fitness:", fitness)
-
-            # Track the best individual
-            if fitness > best_fitness:
-                best_fitness = fitness
-                best_individual = individual
-
-        if best_individual:
-            print("\nBest Solution:")
-            best_individual.print_chromosome()
-            print("Fitness:", best_fitness)
-
-    def correct_color(self, n_colors, percentage):
-        """
-        Checks if a sufficient percentage of individuals use the specified number of colors.
-
-        :param n_colors: The target number of colors.
-        :param percentage: The required percentage of individuals to meet the target.
-        :return: True if the condition is met, False otherwise.
-        """
-        target = int(self.n_individuals * (percentage / 100))
-        return sum(1 for ind in self.population if ind.get_num_of_colors() == n_colors) >= target
-
-
-    def main_loop(self, max_iterations, min_colors, p_best, p_cross, p_mutation,totaliteration):
-        color_correct = False
-
-        while totaliteration[0] < max_iterations and not color_correct:
-            self.create_new_population(p_best, p_cross, p_mutation)
-            color_correct = self.correct_color(min_colors, 100.0 - p_mutation)
-            totaliteration[0] += 1
-
-        # After completing the loop, save the best coloring
-        self.save_best_coloring()
-
-
-    def _get_random_int(self, start, end):
-        """
-        Generates a random integer within the specified range.
-
-        :param start: The starting value (inclusive).
-        :param end: The ending value (inclusive).
-        :return: A random integer within the range.
-        """
-        return random.randint(start, end)
-
-
-    def save_best_coloring(self, filename="best_solution.txt"):
-        """
-        Save the best coloring solution to a file in the same directory as the script.
-        """
-        # Get the directory of the main script
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(current_dir, filename)
-
-        # Find the best individual
-        best_individual = max(self.population, key=lambda ind: ind.get_fitness())
-        
-        # Extract the coloring (chromosome) from the best individual
-        best_coloring = best_individual.chromosome
-        num_colors_used = best_individual.get_num_of_colors()
-        fitness = best_individual.get_fitness()
-
-        # Save the coloring to a file in the specified format
-        try:
-            with open(file_path, 'w') as file:
-                file.write(f"Chromosome: {best_coloring}\n")
-                file.write(f"Number of colors used: {num_colors_used}\n")
-                file.write(f"Fitness: {fitness}\n")
-            print(f"Best coloring saved successfully to {file_path}.")
-        except IOError as e:
-            print(f"Error saving the best coloring to {file_path}: {e}")
+        # Save the best solution after all generations
+        self.population.sort(key=lambda ind: self.fitness(ind), reverse=True)
+        self.best_solution = self.population[0]
+        self.save_best_solution(output_file)
+        return self.best_solution
