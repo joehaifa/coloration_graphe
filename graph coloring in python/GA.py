@@ -107,5 +107,5 @@ class GA:
         # Save the best solution after all generations
         self.population.sort(key=lambda ind: self.fitness(ind), reverse=True)
         self.best_solution = self.population[0]
-        self.save_best_solution(output_file)
+        self.save_best_solution()
         return self.best_solution

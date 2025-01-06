@@ -253,7 +253,7 @@ def main():
 
     if option == 1:
         # Existing code for "Color a graph"
-        data = ["myciel3.col", "myciel4.col","DSJC125.1","anna.col","queen9_9.col"]
+        data = ["myciel3.col", "myciel4.col","DSJC125.1.col","anna.col","queen9_9.col"]
         graph_main = Graph()
 
         # Graph selection
@@ -307,7 +307,7 @@ def main():
             if n_graph == 2:
                 max_iterations = 1000
                 n_individuals = 10
-                n_colors = 8
+                n_colors = 7
 
             if n_graph == 3:
                 max_iterations = 1000
@@ -317,7 +317,7 @@ def main():
             if n_graph == 4:
                 max_iterations = 1000
                 n_individuals = 10
-                n_colors = 15
+                n_colors = 13
             
           
             
@@ -336,9 +336,8 @@ def main():
             # Simulated Annealing parameters
             max_iterations = 10000
             initial_temp = 1.0
-            min_temp = 0
             n_colors = 0
-
+            min_temp = 0
     
             
             if n_graph == 0:
@@ -356,7 +355,7 @@ def main():
                 n_colors = 11
             
             if n_graph == 4:
-                n_colors = 15
+                n_colors = 13
 
            
 
@@ -382,13 +381,14 @@ def main():
                 n_colors = 5
             
             if n_graph == 2:
-                n_colors = 10
+                neighborhood_size = 6
+                n_colors = 9
 
             if n_graph == 3:
                 n_colors = 11
             
             if n_graph == 4:
-                n_colors = 15
+                n_colors = 12
 
             
 
