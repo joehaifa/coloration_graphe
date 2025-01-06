@@ -112,7 +112,7 @@ class Graph:
 
 def modify_graph(graph: Graph):
     print("\nSelect a graph to modify:")
-    graph_files = ["myciel3.col", "myciel4.col","graph125sommets.col","anna.col","queen9_9.col"]
+    graph_files = ["myciel3.col", "myciel4.col","DSJC125.1.col","anna.col","queen9_9.col"]
     for i, filename in enumerate(graph_files):
         print(f"[{i}] {filename}")
     graph_index = int(input("Enter your choice: "))
@@ -253,7 +253,7 @@ def main():
 
     if option == 1:
         # Existing code for "Color a graph"
-        data = ["myciel3.col", "myciel4.col","graph125sommets.col","anna.col","queen9_9.col"]
+        data = ["myciel3.col", "myciel4.col","DSJC125.1","anna.col","queen9_9.col"]
         graph_main = Graph()
 
         # Graph selection
@@ -426,7 +426,7 @@ def main():
         coloring = read_coloring_from_file(coloring_file)
         print(f"Coloring loaded: {coloring}")
 
-        graph_files = ["myciel3", "myciel4","graph125sommets","anna","queen9_9"]  # Graphs to choose from
+        graph_files = ["myciel3", "myciel4","DSJC125.1","anna","queen9_9"]  # Graphs to choose from
         print("Select a graph file:")
         for i, filename in enumerate(graph_files):
             print(f"[{i}] {filename}")
