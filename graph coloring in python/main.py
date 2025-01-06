@@ -276,7 +276,7 @@ def main():
         else:
             graph_main.print_graph()
 
-        start_time = time.time()
+        
 
         # Solving method selection
         print("Now, choose a solving method: \n1. Genetic Algorithm \n2. Simulated Annealing \n3. Tabu Search")
@@ -284,7 +284,7 @@ def main():
 
         max_iterations = 100000
         totaliteration = [0] 
-
+        start_time = time.time()
         if select_method == 1:
             # Genetic Algorithm parameters
             max_iterations = 10000
