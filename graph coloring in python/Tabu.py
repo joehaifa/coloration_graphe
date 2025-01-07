@@ -147,7 +147,6 @@ class Tabu:
             print(f"Chromosome : {self.best_solution.chromosome}")
             print(f"Nombre de couleurs : {self.best_solution.get_num_of_colors()}")
             print(f"FIT : {self.best_solution.get_fitness()}")
-            print(f"Conflits : {self.best_conflicts}")
             self.save_best_solution()
         else:
             print("Aucune solution optimale trouvée.")

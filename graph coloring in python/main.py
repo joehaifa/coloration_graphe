@@ -248,6 +248,7 @@ def main():
     print("1. Color a graph")
     print("2. Propose a coloring")
     print("3. Modify a graph")
+    print("4. QUIT")
 
     option = int(input("Enter your choice: "))
 
@@ -443,7 +444,8 @@ def main():
         graph = Graph()
         modify_graph(graph)  # Call the modify graph function
 
-        
+    if option == 4 :
+          print("FIN")
 
     else:
         print("Invalid option selected. Exiting.")
