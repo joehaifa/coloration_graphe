@@ -444,7 +444,7 @@ def main():
         graph = Graph()
         modify_graph(graph)  # Call the modify graph function
 
-    if option == 4 :
+    elif option == 4 :
           print("FIN")
 
     else:
